@@ -46,13 +46,13 @@ func Worker(mapf func(string, string) []KeyValue,
 func CallExample() {
 
 	// declare an argument structure.
-	args := ExampleArgs{}
+	args := ExampleArgs{}    // Defined in rpc.go
 
 	// fill in the argument(s).
 	args.X = 99
 
 	// declare a reply structure.
-	reply := ExampleReply{}
+	reply := ExampleReply{}    // Defined in rpc.go
 
 	// send the RPC request, wait for the reply.
 	// the "Coordinator.Example" tells the
@@ -74,14 +74,14 @@ func CallExample() {
 //
 func call(rpcname string, args interface{}, reply interface{}) bool {
 	// c, err := rpc.DialHTTP("tcp", "127.0.0.1"+":1234")
-	sockname := coordinatorSock()
-	c, err := rpc.DialHTTP("unix", sockname)
+	sockname := coordinatorSock()	// realized in rpc.go
+	c, err := rpc.DialHTTP("unix", sockname)	// realized in "net/rpc" and try to create a RPC client connection
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
 	defer c.Close()
 
-	err = c.Call(rpcname, args, reply)
+	err = c.Call(rpcname, args, reply)    // realized in "net/rpc" and making remote procedure calls (RPC) on an established RPC client connection
 	if err == nil {
 		return true
 	}

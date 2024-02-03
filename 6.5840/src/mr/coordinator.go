@@ -32,7 +32,7 @@ func (c *Coordinator) server() {
 	rpc.Register(c)
 	rpc.HandleHTTP()
 	//l, e := net.Listen("tcp", ":1234")
-	sockname := coordinatorSock()
+	sockname := coordinatorSock()	// realized in rpc.go
 	os.Remove(sockname)
 	l, e := net.Listen("unix", sockname)
 	if e != nil {
