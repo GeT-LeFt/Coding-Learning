@@ -29,10 +29,10 @@ func (c *Coordinator) Example(args *ExampleArgs, reply *ExampleReply) error {
 // start a thread that listens for RPCs from worker.go
 //
 func (c *Coordinator) server() {
-	rpc.Register(c)
-	rpc.HandleHTTP()
+	rpc.Register(c)      			// 注册当前对象（协调器）为 RPC 服务对象，使其方法可被远程调用。
+	rpc.HandleHTTP()   				// 将RPC服务绑定到HTTP协议上。
 	//l, e := net.Listen("tcp", ":1234")
-	sockname := coordinatorSock()	// realized in rpc.go
+	sockname := coordinatorSock()	// realized in rpc.go 用于生成套接字文件路径
 	os.Remove(sockname)
 	l, e := net.Listen("unix", sockname)
 	if e != nil {
