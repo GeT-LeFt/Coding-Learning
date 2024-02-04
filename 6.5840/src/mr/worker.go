@@ -4,6 +4,10 @@ import "fmt"
 import "log"
 import "net/rpc"
 import "hash/fnv"
+import "time"		// 随机数产生WorkerID
+import "math/rand"
+import "os"
+import "io/ioutil"
 
 
 //
@@ -32,10 +36,62 @@ func Worker(mapf func(string, string) []KeyValue,
 	reducef func(string, []string) string) {
 
 	// Your worker implementation here.
+	// 使用当前时间的纳秒作为种子初始化随机数生成器
+	rand.Seed(time.Now().UnixNano())
+	// 生成一个在 [0, 10000) 范围内的随机整数
+	workerID := rand.Intn(10000)
 
 	// uncomment to send the Example RPC to the coordinator.
-	CallExample()
+	// CallExample()
 
+	// Send RPC to request job
+	CalltoRequstJob(workerID)
+	
+	// read each input file,
+	// pass it to Map,
+	// accumulate the intermediate Map output.
+	intermediate := []KeyValue{}
+	for _, filename := range os.Args[2:] {
+		file, err := os.Open(filename)
+		if err != nil {
+			log.Fatalf("cannot open %v", filename)
+		}
+		content, err := ioutil.ReadAll(file)
+		if err != nil {
+			log.Fatalf("cannot read %v", filename)
+		}
+		file.Close()
+		kva := mapf(filename, string(content))
+		intermediate = append(intermediate, kva...)
+	}
+	
+	fmt.Printf("%v\n", len(intermediate))
+	oname := "mr-out-0"
+	ofile, _ := os.Create(oname)
+
+	//
+	// call Reduce on each distinct key in intermediate[],
+	// and print the result to mr-out-0.
+	//
+	i := 0
+	for i < len(intermediate) {
+		j := i + 1
+		for j < len(intermediate) && intermediate[j].Key == intermediate[i].Key {
+			j++
+		}
+		values := []string{}
+		for k := i; k < j; k++ {
+			values = append(values, intermediate[k].Value)
+		}
+		output := reducef(intermediate[i].Key, values)
+
+		// this is the correct format for each line of Reduce output.
+		fmt.Fprintf(ofile, "%v %v\n", intermediate[i].Key, output)
+
+		i = j
+	}
+
+	ofile.Close()
 }
 
 //
@@ -62,6 +118,18 @@ func CallExample() {
 	if ok {
 		// reply.Y should be 100.
 		fmt.Printf("reply.Y %v\n", reply.Y)
+	} else {
+		fmt.Printf("call failed!\n")
+	}
+}
+
+func CalltoRequstJob(workerID int) {
+	args := MapTaskArgs{}
+	args.WorkerID = workerID
+	reply := MapTaskReply{}
+	ok := call("Coordinator.ReceiveWorkerRequest", &args, &reply)
+	if ok {
+		fmt.Printf("Filename: %v NReduce: %v TaskID: %v\n", reply.Filename, reply.NReduce, reply.TaskID)
 	} else {
 		fmt.Printf("call failed!\n")
 	}

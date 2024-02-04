@@ -25,6 +25,7 @@ type ExampleReply struct {
 // Add your RPC definitions here.
 // MapTask related
 type MapTaskArgs struct {    // 可以包含特定于 Map 任务请求的字段
+	WorkerID int
 }
 
 type MapTaskReply struct {
