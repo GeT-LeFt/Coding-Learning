@@ -24,10 +24,23 @@ type ExampleReply struct {
 
 // Add your RPC definitions here.
 // MapTask related
+type MapTaskArgs struct {    // 可以包含特定于 Map 任务请求的字段
+}
+
+type MapTaskReply struct {
+	Filename string			// 分配的文件名
+	NReduce  int			// Reduce任务数量
+	TaskID   int			// Map任务的ID
+}
 
 // ReduceTask related
+type ReduceTaskArgs struct {// 可以包含特定于 Reduce 任务请求的字段
+}
 
-
+type ReduceTaskReply struct {
+	KeyValues []KeyValue	// Map输出的K/V
+	TaskID	  int			// reduce任务ID
+}
 
 // Cook up a unique-ish UNIX-domain socket name
 // in /var/tmp, for the coordinator.
