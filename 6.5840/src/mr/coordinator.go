@@ -28,31 +28,8 @@ func (c *Coordinator) Example(args *ExampleArgs, reply *ExampleReply) error {
 	return nil
 }
 
-func (c *Coordinator) ReceiveWorkerRequest(args *MapTaskArgs, reply *MapTaskReply) error {
-	workerID := args.WorkerID
-	// 添加worker及其状态
-	if _, exists := c.Workers[workerID]; !exists {
-		c.addWorker(workerID, true)
-	} else {
-		fmt.Printf("workerID exists!")
-	}
-
-	// reply赋值
-	reply.Filelist = c.Files
-
+func (c *Coordinator) Example(args *ExampleArgs, reply *ExampleReply) error {
 	return nil
-}
-
-func (c *Coordinator) addWorker(workerID int, status bool) {
-	c.Workers[workerID] = status
-}
-
-func (c *Coordinator) getWorkerStatus(workerID int) bool {
-	return c.Workers[workerID]
-}
-
-func (c *Coordinator) markWorkerAsFailed(workerID int) {
-	c.Workers[workerID] = false
 }
 
 //

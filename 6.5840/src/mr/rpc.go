@@ -23,15 +23,22 @@ type ExampleReply struct {
 }
 
 // Add your RPC definitions here.
+
 // MapTask related
-type MapTaskArgs struct {    // 可以包含特定于 Map 任务请求的字段
-	WorkerID int
+type RequestTaskArgs struct {	// worker ---> coordinator
+	WorkerId int				// os.Getpid()
+}
+
+type RequestTaskReply struct {	// coordinator ---> worker
+	TaskType string				// "Map", "Reduce", "Done"
+	TaskId   int
+	TaskFile string
 }
 
 type MapTaskReply struct {
-	Filename string			// 分配的文件名
-	NReduce  int			// Reduce任务数量
-	TaskID   int			// Map任务的ID
+	Filename string				// 分配的文件名
+	NReduce  int				// Reduce任务数量
+	TaskID   int				// Map任务的ID
 }
 
 // ReduceTask related
