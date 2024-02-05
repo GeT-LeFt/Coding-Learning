@@ -4,10 +4,7 @@ import "fmt"
 import "log"
 import "net/rpc"
 import "hash/fnv"
-import "time"		// 随机数产生WorkerID
-import "math/rand"
 import "os"
-import "io/ioutil"
 
 
 //
@@ -76,11 +73,15 @@ func CallExample() {
 	}
 }
 
+func getReduceNumebr() {
+
+}
+
 func requestTask() {
 	args := RequestTaskArgs{}
 	args.WorkerId = os.Getpid()		// 把程序ID作为worker的id
 	reply := RequestTaskReply{}
-	ok := call("Coordinator.", &args, &reply)
+	ok := call("Coordinator.RequestTaskReply", &args, &reply)
 	if ok {
 		fmt.Printf("Worker-%v: request task!\n", args.WorkerId)
 	} else {

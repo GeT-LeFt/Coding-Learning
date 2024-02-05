@@ -12,8 +12,19 @@ import "time"
 
 type Coordinator struct {
 	// Your definitions here.
-	Workers map[int]bool
-	Files []string
+	mu		    sync.Mutex
+	nMap		int
+	nReduce		int
+	mapTasks	[]Task
+	reduceTasks []Task
+}
+
+type Task struct {
+	Type 		string
+	Status		string
+	Index		int
+	FileName	string
+	WorkerId	int
 }
 
 // Your code here -- RPC handlers for the worker to call.
@@ -28,8 +39,28 @@ func (c *Coordinator) Example(args *ExampleArgs, reply *ExampleReply) error {
 	return nil
 }
 
-func (c *Coordinator) Example(args *ExampleArgs, reply *ExampleReply) error {
+func (c *Coordinator) RequestTaskReply(args *RequestTaskArgs, reply *RequestTaskReply) error {
+	c.mu.Lock()
+	if c.nMap > 0 {
+	} else if c.nReduce > 0 {
+
+	} else {
+
+	}
+	reply.TaskType = 
+	reply.TaskId
+	reply.TaskFile
 	return nil
+}
+
+func (c *Coordinator) selectTask(tasks []Task, workerId int) *Task {
+	tmpTask := Task{}
+	for i := 0; i < len(tasks); i++ {
+		if tasks[i].Status == "NotStarted" {
+			return &tmpTask
+		}
+	}
+	return &tmpTask
 }
 
 //
@@ -68,13 +99,27 @@ func (c *Coordinator) Done() bool {
 //
 func MakeCoordinator(files []string, nReduce int) *Coordinator {
 	c := Coordinator{
-		Workers: make(map[int]bool), // 初始化 Workers map
-		Files:	 files,
 	}
 
 	// Your code here.
-	var mu sync.Mutex					// 辅助函数可注释掉，每隔1s查看worker状态
-	go printMapContent(c.Workers, &mu)	// 辅助函数可注释掉，每隔1s查看worker状态
+	c.nMap = len(files)
+	c.nReduce = nReduce
+	c.mapTasks = make([]Task, 0, c.nMap)	// 初始化空白map和reduce的task切片
+	c.reduceTasks = make([]Task, 0, nReduce)
+
+	for i := 0; i < c.nMap; i++ {			// 分配MapTask
+		tmpTask := Task{"MapTask", "NotStarted", i, files[i], -1}
+		c.mapTasks = append(c.mapTasks, tmpTask)
+	}
+
+	for i := 0; i < c.nReduce; i++ {		// 分配空白ReduceTask
+		tmpTask := Task{"ReduceTask", "NotStarted", i, "", -1}
+		c.reduceTasks = append(c.reduceTasks, tmpTask)
+	}
+
+
+	// var mu sync.Mutex					// 辅助函数可注释掉，每隔1s查看worker状态
+	// go printMapContent(c.Workers, &mu)	// 辅助函数可注释掉，每隔1s查看worker状态
 
 	c.server()
 	return &c
