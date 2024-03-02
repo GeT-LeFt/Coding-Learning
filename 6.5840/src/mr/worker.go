@@ -5,6 +5,7 @@ import "log"
 import "net/rpc"
 import "hash/fnv"
 import "os"
+import "time"
 
 
 //
@@ -37,11 +38,12 @@ func Worker(mapf func(string, string) []KeyValue,
 
 	// Your worker implementation here.
 	getReduceNumebr()
-	for {
+	// for {						// 循环要任务
 		requestTask()
 		doMap()
 		doReduce()
-	}
+		time.Sleep(time.Second * 1)
+	// }
 }
 
 //
@@ -84,17 +86,18 @@ func requestTask() {
 	ok := call("Coordinator.RequestTaskReply", &args, &reply)
 	if ok {
 		fmt.Printf("Worker-%v: request task!\n", args.WorkerId)
+		fmt.Printf("reply: %v\n", reply)
 	} else {
 		fmt.Printf("call failed!\n")
 	}
 }
 
 func doMap() {
-
+	fmt.Printf("Worker is doing Map\n")
 }
 
 func doReduce() {
-
+	fmt.Printf("Worker is doing Reduce\n")
 }
 
 //

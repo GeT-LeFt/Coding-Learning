@@ -12,6 +12,7 @@ import "time"
 
 type Coordinator struct {
 	// Your definitions here.
+	Workers map[int]bool	// 辅助函数可注释掉，每隔1s查看worker状态
 	mu		    sync.Mutex
 	nMap		int
 	nReduce		int
@@ -41,26 +42,35 @@ func (c *Coordinator) Example(args *ExampleArgs, reply *ExampleReply) error {
 
 func (c *Coordinator) RequestTaskReply(args *RequestTaskArgs, reply *RequestTaskReply) error {
 	c.mu.Lock()
-	if c.nMap > 0 {
-	} else if c.nReduce > 0 {
-
+	c.Workers[args.WorkerId] = true	// 辅助函数可注释掉，每隔1s查看worker状态
+	tmpTask := &Task{}
+	if c.nMap > 0 {				// 给map任务
+		tmpTask = c.selectTask("MapTask", c.mapTasks, args.WorkerId)
+	} else if c.nReduce > 0 {	// 给reduce任务
+		tmpTask = c.selectTask("ReduceTask", c.reduceTasks, args.WorkerId)
 	} else {
 
 	}
-	reply.TaskType = 
-	reply.TaskId
-	reply.TaskFile
+	reply.TaskType = tmpTask.Type
+	reply.TaskId = args.WorkerId
+	reply.TaskFile = tmpTask.FileName
+	c.mu.Unlock()
 	return nil
 }
 
-func (c *Coordinator) selectTask(tasks []Task, workerId int) *Task {
+func (c *Coordinator) selectTask(taskType string, tasks []Task, workerId int) *Task {
 	tmpTask := Task{}
 	for i := 0; i < len(tasks); i++ {
-		if tasks[i].Status == "NotStarted" {
+		if tasks[i].Status == "NotStarted"  && tasks[i].Type == taskType {
+			tmpTask = tasks[i]
+			tmpTask.Status = "Executing"
+			tasks[i].Status = "Executing"
+			tmpTask.WorkerId = workerId
+			tasks[i].WorkerId = workerId
 			return &tmpTask
 		}
 	}
-	return &tmpTask
+	return &Task{"NoTask", "Finished", -1, "", -1}	// 全部finish了
 }
 
 //
@@ -99,6 +109,7 @@ func (c *Coordinator) Done() bool {
 //
 func MakeCoordinator(files []string, nReduce int) *Coordinator {
 	c := Coordinator{
+		Workers: make(map[int]bool), 		// 辅助函数可注释掉，每隔1s查看worker状态
 	}
 
 	// Your code here.
@@ -117,10 +128,10 @@ func MakeCoordinator(files []string, nReduce int) *Coordinator {
 		c.reduceTasks = append(c.reduceTasks, tmpTask)
 	}
 
-
 	// var mu sync.Mutex					// 辅助函数可注释掉，每隔1s查看worker状态
 	// go printMapContent(c.Workers, &mu)	// 辅助函数可注释掉，每隔1s查看worker状态
-
+	var mu sync.Mutex						// 辅助函数可注释掉，每隔1s查看task状态
+	go checkTaskStatus(c.mapTasks, &mu)		// 辅助函数可注释掉，每隔1s查看task状态
 	c.server()
 	return &c
 }
@@ -137,4 +148,16 @@ func printMapContent(m map[int]bool, mu *sync.Mutex) {    // 辅助函数可注�
 		fmt.Printf("\n")
         time.Sleep(1 * time.Second) // 等待 1 秒
     }
+}
+func checkTaskStatus(tasks []Task, mu *sync.Mutex) {		// 辅助函数可注释掉，每隔1s查看task状态
+	for {
+		mu.Lock()
+		for _, task := range tasks {
+			fmt.Printf("   %-10v | %-10v | %v | %-24v | %v", task.Type, task.Status, task.Index, task.FileName, task.WorkerId)
+			fmt.Printf("\n")
+		}
+		mu.Unlock()
+		fmt.Printf("\n")
+        time.Sleep(1 * time.Second) // 等待 1 秒
+	}
 }
